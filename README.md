@@ -9,8 +9,10 @@ It works like the BuddyFiles shelf in BuddyMac. The shelf keeps references, so f
 ## Install
 
 ```sh
-omarchy plugin add https://github.com/OxFrancesco/OmaShelf --enable
+curl -fsSL https://omashelf.buddytools.org/install.sh | bash
 ```
+
+Run it again to update. Without the script: `omarchy plugin add https://github.com/OxFrancesco/OmaShelf --enable`.
 
 The icon goes in the bar's right section. Move it with `omarchy bar move omashelf --after omarchy.tray`, or drag it along the bar.
 
@@ -36,5 +38,6 @@ omarchy-shell omashelf add ~/Downloads/report.pdf
 - `Panel.qml` is the bar icon and the popup.
 - `shelf.py` keeps the shelf in `~/.local/share/omashelf/shelf.json` and handles paste, copy, open and the file chooser. Every command prints the shelf as JSON.
 - Video thumbnails are cached in `~/.cache/omashelf/thumbs/`.
+- `website/` is the landing page at [omashelf.buddytools.org](https://omashelf.buddytools.org), with the install script. `bun run deploy` from that folder publishes it to Cloudflare.
 
 MIT licensed.

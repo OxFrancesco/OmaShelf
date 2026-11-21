@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>OmaShelf</title>
+  <meta name="description" content="A file shelf in the Omarchy bar. Drop or paste files, photos, videos and text, then drag them out into any app.">
+  <meta property="og:title" content="OmaShelf">
+  <meta property="og:description" content="A file shelf in the Omarchy bar. Drop files in, drag them out anywhere.">
+  <meta property="og:image" content="https://omashelf.buddytools.org/og.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/ChakraPetch-Bold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="header wrap">
+    <a class="brand" href="#main" aria-label="OmaShelf home"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13.5V20h18v-6.5"/><path d="M7 9.5h10M8.5 6h7"/></svg>OmaShelf</a>
+    <a href="https://github.com/OxFrancesco/OmaShelf">GitHub <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="main" class="wrap">
+    <section class="intro" aria-labelledby="title">
+      <h1 id="title">OmaShelf</h1>
+      <p class="lead">A file shelf in the Omarchy bar. Drop files, photos, videos and text on it, then drag them out into any app.</p>
+      <div class="command"><code id="install-command">curl -fsSL https://omashelf.buddytools.org/install.sh | bash</code><button type="button" data-copy="install-command">Copy</button></div>
+      <p class="muted">Needs Omarchy's Quickshell desktop. Run it again to update.</p>
+    </section>
+
+    <figure class="demo" aria-label="Interactive OmaShelf demo">
+      <div class="desk" id="desk">
+        <div class="files" id="desk-files"></div>
+        <div class="popup" id="popup" role="dialog" aria-label="Shelf" hidden>
+          <div class="popup-tools">
+            <span class="tool-btn" title="Paste" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="16" rx="1"/><path d="M9 5V3.5h6V5"/></svg></span>
+            <span class="tool-btn" title="Add files" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></span>
+          </div>
+          <div class="grid" id="shelf-grid"></div>
+          <p class="empty" id="shelf-empty">Drop files here or press Ctrl+V</p>
+          <div class="drop-hint" aria-hidden="true">Drop to add</div>
+        </div>
+        <div class="bar">
+          <div class="bar-left"><span class="ws on">1</span><span class="ws">2</span><span class="ws">3</span></div>
+          <div class="bar-center" id="clock">Saturday 11:32</div>
+          <div class="bar-right">
+            <svg class="bi" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+            <button type="button" class="shelf-icon" id="shelf-icon" aria-label="Open the shelf" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13.5V20h18v-6.5"/><path class="full" d="M7 9.5h10M8.5 6h7"/><path class="plus" d="M12 5v8M8 9h8"/></svg>
+            </button>
+            <svg class="bi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5a13 13 0 0 1 18 0L12 20z" class="fill"/></svg>
+            <svg class="bi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h4l5-4.5v14l-5-4.5H4z" class="fill"/></svg>
+            <svg class="bi" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="4" width="8" height="17" rx="1.5" class="fill"/><path d="M10.5 2.5h3" /></svg>
+          </div>
+        </div>
+      </div>
+      <figcaption class="muted">Drag a file onto the tray icon, hold it there, then drop it in. Drag it back out to the desktop.</figcaption>
+    </figure>
+
+    <section class="section" aria-labelledby="use-title">
+      <h2 id="use-title">Use</h2>
+      <dl class="keys">
+        <div><dt>Drop</dt><dd>Drop files on the tray icon. Hold them there and the shelf opens.</dd></div>
+        <div><dt><kbd>Ctrl V</kbd></dt><dd>Paste copied files, a screenshot or text. Middle-click the icon does the same. Images and text become new files.</dd></div>
+        <div><dt>Drag out</dt><dd>Drag a file into a browser, chat or editor. Select several to drag them together.</dd></div>
+        <div><dt><kbd>Ctrl C</kbd></dt><dd>Copy the selection. One image goes to the clipboard as an image, so it pastes into chats.</dd></div>
+        <div><dt><kbd>Enter</kbd></dt><dd>Open the file. The folder icon shows it in your file manager.</dd></div>
+        <div><dt><kbd>Delete</kbd></dt><dd>Remove from the shelf. Your files stay where they are.</dd></div>
+        <div><dt><kbd>Ctrl O</kbd></dt><dd>Add files with the file picker.</dd></div>
+        <div><dt><kbd>/</kbd></dt><dd>Filter by name once the shelf holds more than eight files.</dd></div>
+      </dl>
+    </section>
+
+    <section class="section" aria-labelledby="details-title">
+      <h2 id="details-title">Details</h2>
+      <ol class="steps">
+        <li>The shelf keeps links to your files. Pasted images and text are saved in ~/.local/share/omashelf and deleted when you remove them.</li>
+        <li>Every monitor's bar shows the same shelf.</li>
+        <li>It uses python3, wl-clipboard and ffmpegthumbnailer, which Omarchy already ships. The installer lists anything missing.</li>
+        <li>The shell runs plugins as your user, without a sandbox. Read the source on GitHub before you install.</li>
+        <li><span>Without the script: <code class="inline">omarchy plugin add https://github.com/OxFrancesco/OmaShelf --enable</code></span></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="wrap footer"><a href="https://oddofrancesco.com">Francesco Oddo <span aria-hidden="true">↗</span></a><a href="https://github.com/OxFrancesco/OmaShelf">Source <span aria-hidden="true">↗</span></a></footer>
+  <script src="page.js" defer></script>
+</body>
+</html>
