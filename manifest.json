@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "omashelf",
+  "name": "OmaShelf",
+  "version": "1.0.0",
+  "author": "Francesco Oddo",
+  "license": "MIT",
+  "description": "A file shelf in the bar. Drop or paste files, photos, videos and text, then drag them out wherever you need them.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "OmaShelf",
+    "description": "Hold files in the bar. Drop or paste them in, drag them out, copy, open or show them in their folder.",
+    "category": "Files",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {},
+    "schema": []
+  }
+}
