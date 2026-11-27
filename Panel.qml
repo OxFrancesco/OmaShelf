@@ -6,6 +6,7 @@ import Quickshell.Io
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
+import "Ui" as ShelfUi
 
 // A file shelf in the bar, after BuddyFiles in BuddyMac. Files stay where
 // they live; the shelf keeps references. Drop or paste things in, drag them
@@ -153,19 +154,6 @@ Panel {
     })
   }
 
-  // --- drag out ------------------------------------------------------------
-
-  function startDrag(paths, thumb) {
-    if (draggingOut || paths.length === 0) return
-    // The drag has to start from an item in the popup's own window: the
-    // compositor only honours a drag from the surface that got the press.
-    var proxy = panel.loadedContent.dragProxy
-    draggingOut = true
-    proxy.Drag.imageSource = thumb ? toUri(thumb) : ""
-    proxy.Drag.mimeData = { "text/uri-list": paths.map(toUri) }
-    proxy.Drag.active = true
-  }
-
   // --- process -------------------------------------------------------------
 
   Process {
@@ -241,6 +229,7 @@ Panel {
 
     DropArea {
       anchors.fill: parent
+      z: 1000
       onEntered: function(drag) {
         if (root.draggingOut) { drag.accepted = false; return }
         drag.accept(Qt.CopyAction)
@@ -259,7 +248,7 @@ Panel {
 
   // --- popup ---------------------------------------------------------------
 
-  KeyboardPanel {
+  ShelfUi.KeyboardPanel {
     id: panel
     anchorItem: button
     owner: root
@@ -276,7 +265,6 @@ Panel {
       id: keys
       property alias flick: flick
       property alias grid: grid
-      property alias dragProxy: dragProxy
       anchors.fill: parent
       implicitHeight: column.implicitHeight
       blocked: search.activeFocus
@@ -298,27 +286,11 @@ Panel {
         else if (key === "o") root.choose()
       }
 
-      Item {
-        id: dragProxy
-        width: 1
-        height: 1
-        Drag.dragType: Drag.Automatic
-        Drag.supportedActions: Qt.CopyAction | Qt.LinkAction
-        Drag.proposedAction: Qt.CopyAction
-        Drag.imageSourceSize: Qt.size(Style.space(96), 0)
-        Drag.hotSpot.x: 24
-        Drag.hotSpot.y: 24
-        Drag.onDragFinished: function(action) {
-          dragProxy.Drag.active = false
-          root.draggingOut = false
-          if (action !== Qt.IgnoreAction) root.close()
-        }
-      }
-
       DropArea {
         anchors.fill: parent
+        z: 1000
         onEntered: function(drag) {
-          if (drag.source === dragProxy) { drag.accepted = false; return }
+          if (root.draggingOut) { drag.accepted = false; return }
           drag.accept(Qt.CopyAction)
           root.cardDragOver = true
         }
@@ -522,10 +494,27 @@ Panel {
       image: "\u{F02E9}", video: "\u{F0567}", audio: "\u{F075A}", pdf: "\u{F0226}",
       text: "\u{F0219}", folder: "\u{F024B}", archive: "\u{F05C4}"
     })[file.kind] || "\u{F0214}"
-    property point pressAt: Qt.point(0, 0)
-    property bool pressedHere: false
+    readonly property string dragUris: (chosen ? root.selected : [file.path]).map(root.toUri).join("\r\n")
 
-    hasCursor: mouse.containsMouse || (root.cursor === tileIndex && !chosen)
+    Drag.dragType: Drag.Automatic
+    Drag.supportedActions: Qt.CopyAction
+    Drag.mimeData: {
+      "text/uri-list": dragUris,
+      "text/plain": dragUris
+    }
+    Drag.active: dragOutHandler.active
+    Drag.imageSource: file.thumb ? root.toUri(file.thumb) : ""
+    Drag.imageSourceSize: Qt.size(Style.space(96), Style.space(96))
+    Drag.hotSpot.x: Style.space(24)
+    Drag.hotSpot.y: Style.space(24)
+    Drag.onDragStarted: root.draggingOut = true
+    Drag.onDragFinished: function(action) {
+      root.draggingOut = false
+      if (action !== Qt.IgnoreAction)
+        root.close()
+    }
+
+    hasCursor: hoverHandler.hovered || (root.cursor === tileIndex && !chosen)
     current: chosen
     foreground: root.foreground
     implicitHeight: content.implicitHeight + Style.space(12)
@@ -604,7 +593,7 @@ Panel {
           height: width
           radius: width / 2
           color: removeArea.containsMouse ? root.urgent : Qt.alpha(Commons.Color.popups.background, 0.85)
-          opacity: mouse.containsMouse || removeArea.containsMouse ? 1 : 0
+          opacity: hoverHandler.hovered || removeArea.containsMouse ? 1 : 0
           visible: opacity > 0
           Behavior on opacity { NumberAnimation { duration: Style.duration(100) } }
 
@@ -639,34 +628,35 @@ Panel {
       }
     }
 
-    MouseArea {
-      id: mouse
-      anchors.fill: parent
-      z: -1
-      hoverEnabled: true
+    HoverHandler {
+      id: hoverHandler
+    }
+
+    TapHandler {
+      id: tapHandler
+      acceptedButtons: Qt.LeftButton
       cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
-      onPressed: function(event) {
-        tile.pressAt = Qt.point(event.x, event.y)
-        tile.pressedHere = true
-        if (!tile.chosen || (event.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)))
-          root.selectAt(tile.tileIndex, event.modifiers)
+      onPressedChanged: {
+        if (!pressed) return
+        var modifiers = point.modifiers
+        if (!tile.chosen || (modifiers & (Qt.ControlModifier | Qt.ShiftModifier)))
+          root.selectAt(tile.tileIndex, modifiers)
       }
-      onReleased: function(event) {
-        // A plain click on one of several selected tiles narrows to it.
-        if (tile.pressedHere && !root.draggingOut && event.button === Qt.LeftButton
-            && !(event.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) && root.selected.length > 1)
+      onTapped: function(eventPoint, button) {
+        if (button !== Qt.LeftButton || root.draggingOut) return
+        if (!(eventPoint.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) && root.selected.length > 1)
           root.selectAt(tile.tileIndex, 0)
-        tile.pressedHere = false
       }
-      onDoubleClicked: function(event) { if (event.button === Qt.LeftButton) root.openPaths([tile.file.path]) }
-      onPositionChanged: function(event) {
-        if (!pressed || !tile.pressedHere || root.draggingOut || !tile.file.exists) return
-        if (Math.hypot(event.x - tile.pressAt.x, event.y - tile.pressAt.y) < 8) return
-        tile.pressedHere = false
-        var paths = tile.chosen ? root.selected : [tile.file.path]
-        root.startDrag(paths, tile.file.thumb)
+      onDoubleTapped: function(eventPoint, button) {
+        if (button === Qt.LeftButton) root.openPaths([tile.file.path])
       }
+    }
+
+    DragHandler {
+      id: dragOutHandler
+      target: null
+      enabled: tile.file.exists
     }
   }
 }
